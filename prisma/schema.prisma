@@ -1,0 +1,263 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid()) // Generates a unique string ID
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+enum Status {
+  active
+  inactive
+}
+
+model MainCategory {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  slug          String        @unique
+  shortDesc     String?
+  fullDesc      String?
+  imageUrl      String?
+  status        Status        @default(active) // Default to active
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  subCategories SubCategory[] @relation("MainCategorySubCategories")
+
+  // Relations
+  products Product[] @relation("MainCategoryProducts")
+}
+
+model SubCategory {
+  id             String       @id @default(cuid())
+  name           String
+  slug           String       @unique
+  status         Status       @default(active) // Default to active
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  mainCategoryId String
+  mainCategory   MainCategory @relation("MainCategorySubCategories", fields: [mainCategoryId], references: [id], onDelete: Cascade)
+  imageUrl       String
+  // Relations
+  products       Product[]    @relation("SubCategoryProducts")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int // Rating out of 5
+  comment   String? // Optional comment
+  createdAt DateTime @default(now())
+
+  // Relations
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+enum StockStatus {
+  inStock
+  outOfStock
+  limitedStock
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  firstName    String
+  lastName     String
+  phoneNumber  String?
+  profileImage String? // Optional profile image URL
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Role to distinguish between different types of users (customer, vendor, admin)
+  role UserRole @default(customer)
+
+  // Vendor-specific fields
+  verificationStatus VerificationStatus @default(pending) // Vendor verification status
+  otpCode            String? // OTP code sent to the vendor for verification
+  otpExpiry          DateTime? // OTP expiry time
+
+  // Multiple addresses
+  addresses Address[]
+
+  // Optional: If the user is a vendor, they can have products
+  products Product[]  @relation("VendorProducts")
+  reviews  Review[] // One-to-many relation with the Review model
+  // Cart and Wishlist relations
+  cart     Cart[]
+  wishlist Wishlist[]
+}
+
+model Address {
+  id          String      @id @default(cuid())
+  userId      String
+  street      String
+  city        String
+  state       String
+  postalCode  String
+  country     String
+  addressType AddressType // e.g., billing, shipping
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum UserRole {
+  customer
+  vendor
+}
+
+enum AddressType {
+  billing
+  shipping
+}
+
+enum VerificationStatus {
+  pending
+  verified
+  rejected
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[] 
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  quantity  Int     @default(1) // Quantity of the product in the cart
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Relations
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id])
+  wishlistItems WishlistItem[] // Multiple products in the wishlist
+}
+
+model WishlistItem {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Relations
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
+}
+
+model Banner {
+  id         String   @id @default(cuid())
+  image      String // Path or URL of the banner image
+  title      String // Title of the banner
+  subtitle   String // Subtitle of the banner
+  discount   String? // Optional discount text
+  buttonText String // Text for the button
+  buttonUrl  String? // Text for the button
+  animation  String // Animation type (e.g., "slideFromLeft", "slideFromRight")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String
+  thumbnail     String
+  shortDesc     String?
+  price         Float
+  stockQuantity Int
+  sizes         String[] // Array of available sizes (e.g., ["S", "M", "L"])
+  colors        String[] // Array of available colors (e.g., ["Red", "Blue", "Black"])
+  productTags   String[] // Tags associated with the product (e.g., ["Summer", "Cotton", "Sale"])
+  imageUrls     String[] // Array of image URLs for the product
+  status        Status   @default(active) // Default status to active
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  soldQuantity  Int      @default(0)
+
+  // Optional fields
+  brand              String? // Brand of the product (e.g., "Nike", "Adidas")
+  discountPrice      Float? // Optional discounted price
+  discountPercentage Float? // Discount percentage (e.g., 20 for 20% off)
+  weight             Float? // Weight of the product (e.g., 1.5 kg)
+  dimensions         String? // Dimensions of the product (e.g., "10x10x5 cm")
+  shippingFee        Float? // Optional shipping fee for the product
+  stockStatus        StockStatus @default(inStock) // Stock status (inStock, outOfStock, limitedStock)
+
+  // Sale and New Badges
+  isNew         Boolean   @default(false) // Flag to mark if the product is new
+  isOnSale      Boolean   @default(false) // Flag to mark if the product is on sale
+  saleStartDate DateTime? // Sale start date (if on sale)
+  saleEndDate   DateTime? // Sale end date (if on sale)
+
+  // Relations
+  mainCategoryId String
+  mainCategory   MainCategory @relation("MainCategoryProducts", fields: [mainCategoryId], references: [id])
+
+  subCategoryId String
+  subCategory   SubCategory @relation("SubCategoryProducts", fields: [subCategoryId], references: [id])
+
+  reviews Review[] // One-to-many relation with the Review model
+  rating  Float? // Average rating of the product (e.g., 4.5)
+  userId  String?
+  user    User?    @relation("VendorProducts", fields: [userId], references: [id])
+
+  // Cart and Wishlist relations
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+
+  // Offers relation
+  offers Offer[] @relation("ProductOffers")
+}
+
+model Offer {
+  id                 String    @id @default(cuid())
+  name               String // Name of the offer (e.g., "Summer Sale")
+  offerType          OfferType // Type of the offer (e.g., "Discount", "Bundle")
+  discountPercentage Float? // Discount percentage (e.g., 20 for 20% off)
+  discountPrice      Float? // Discounted price (if applicable)
+  startDate          DateTime // Start date of the offer
+  endDate            DateTime // End date of the offer
+  status             Status    @default(active) // Active or inactive status
+
+  // Relations
+  products Product[] @relation("ProductOffers")
+}
+
+enum OfferType {
+  discount
+  bundle
+  bogo 
+}
