@@ -4,8 +4,11 @@ import {
   loginUser,
   requestPasswordReset,
   resetPasswordWithOtp,
+  logoutUser,
+  checkUser,
 } from "../controllers/auth/auth.controller";
 import { adminLogin, checkAdmin } from "../controllers/auth/adminController";
+import { authenticated } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -19,5 +22,10 @@ router.post("/register", registerUser); // Register user and send token in cooki
 router.post("/login", loginUser); // Login user and send token in cookies
 router.post("/request-password-reset", requestPasswordReset); // Password reset via OTP
 router.post("/reset-password", resetPasswordWithOtp);
-
+router.post("/logout", logoutUser);
+router.get(
+  "/check-user",
+  authenticated,
+ checkUser
+);
 export default router;

@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
 import { prisma } from "../app";
+import { generateUniqueSlug } from '../utils/slugify';
 
 export const createMainCategory = async (req: Request, res: Response) => {
   const { name, slug, shortDesc, fullDesc, imageUrl } = req.body;
+  const uniqueSlug = slug || await generateUniqueSlug(name, 'mainCategory');
 
   try {
     const mainCategory = await prisma.mainCategory.create({
       data: {
         name,
-        slug,
+        slug: uniqueSlug,
         shortDesc,
         fullDesc,
         imageUrl,
@@ -116,6 +118,24 @@ export const deleteMainCategory = async (req: Request, res: Response) => {
   }
 };
 
+export const createManyMainCategories = async (req: Request, res: Response) => {
+  const mainCategories = req.body;
+  console.log(req.body);
+  try {
+    const createdMainCategories = await prisma.mainCategory.createMany({
+      data: mainCategories,
+    });
+
+    res.status(201).json({
+      message: "Main categories created successfully",
+      createdMainCategories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create main categories" });
+  }
+};
+
 /**
  * Controller for SubCategory
  */
@@ -123,11 +143,13 @@ export const deleteMainCategory = async (req: Request, res: Response) => {
 // Create SubCategory
 export const createSubCategory = async (req: Request, res: Response) => {
   const { name, slug, mainCategoryId, imageUrl } = req.body;
+  const uniqueSlug = slug || await generateUniqueSlug(name, 'subCategory');
+
   try {
     const subCategory = await prisma.subCategory.create({
       data: {
         name,
-        slug,
+        slug: uniqueSlug,
         mainCategoryId,
         imageUrl,
       },
@@ -225,5 +247,33 @@ export const deleteSubCategory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to delete SubCategory" });
+  }
+};
+
+export const createManySubCategories = async (req: Request, res: Response) => {
+  const subCategories = req.body;
+
+  try {
+    const subCategoriesWithSlugs = await Promise.all(
+      subCategories.map(async (subCategory: { name: string; slug?: string; mainCategoryId: string; imageUrl?: string }) => {
+        const uniqueSlug = subCategory.slug || await generateUniqueSlug(subCategory.name, 'subCategory');
+        return {
+          ...subCategory,
+          slug: uniqueSlug,
+        };
+      })
+    );
+
+    const createdSubCategories = await prisma.subCategory.createMany({
+      data: subCategoriesWithSlugs,
+    });
+
+    res.status(201).json({
+      message: "Subcategories created successfully",
+      createdSubCategories,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create subcategories" });
   }
 };

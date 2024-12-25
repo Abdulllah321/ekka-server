@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -136,13 +130,16 @@ enum VerificationStatus {
 }
 
 model Cart {
-  id        String   @id @default(cuid())
-  userId    String
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  createdAt      DateTime @default(now())
+  subtotal       Float    @default(0) // Total of all cart items
+  deliveryCharge Float    @default(100) // Default delivery charge
+  totalAmount    Float    @default(0) // Subtotal + delivery charges - discounts
 
   // Relations
   user      User       @relation(fields: [userId], references: [id])
-  cartItems CartItem[] 
+  cartItems CartItem[]
 }
 
 model CartItem {
@@ -240,6 +237,9 @@ model Product {
 
   // Offers relation
   offers Offer[] @relation("ProductOffers")
+
+  // Coupons relation
+  coupons Coupon[] @relation("ProductCoupons")
 }
 
 model Offer {
@@ -259,5 +259,32 @@ model Offer {
 enum OfferType {
   discount
   bundle
-  bogo 
+  bogo
+}
+
+model Coupon {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  description    String?
+  discountAmount Float
+  discountType   DiscountType
+  startDate      DateTime
+  endDate        DateTime
+  status         CouponStatus @default(active)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  products Product[] @relation("ProductCoupons")
+}
+
+enum CouponStatus {
+  active
+  inactive
+  expired
+}
+
+enum DiscountType {
+  percentage
+  fixedAmount
 }

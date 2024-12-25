@@ -11,8 +11,8 @@ import categoryRoutes from "./routes/categoryRoutes";
 import productRoutes from "./routes/productRoutes";
 import bannerRoutes from "./routes/bannerRoutes";
 import cartRoutes from "./routes/cartRoutes";
+import couponRoutes from "./routes/couponRoutes";
 
-// Initialize Express app and Prisma client
 const app: Application = express();
 const prisma = new PrismaClient();
 
@@ -43,10 +43,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api",  categoryRoutes);
+app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/coupons", couponRoutes);
 
 // Upload API
 app.post(

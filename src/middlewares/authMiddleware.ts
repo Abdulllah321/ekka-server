@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 // Define the JWT Payload type
 export interface JwtPayload {
   id: string;
+  userId?: string;
   role: string;
 }
 
@@ -14,7 +15,6 @@ export const authenticated = (
   next: NextFunction
 ): void => {
   const token = req.cookies.accessToken; // Ensure cookie-parser middleware is used
-
   if (!token) {
     res.status(401).json({ error: "Access token required" });
     return;
@@ -24,11 +24,11 @@ export const authenticated = (
     // Verify and decode the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
-    // Attach user details to req.user
-    // @ts-ignore
-    req.user = { id: decoded.id, role: decoded.role };
-
-    // Proceed to the next middleware or route handler
+    if (decoded.id) {
+      req.user = { id: decoded.id, role: decoded.role };
+    } else if (decoded.userId) {
+      req.user = { id: decoded.userId, role: decoded.role };
+    }
     next();
   } catch (error) {
     console.error("Authentication error:", error);

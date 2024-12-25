@@ -175,3 +175,47 @@ export const resetPasswordWithOtp = async (
 
   res.status(200).json({ message: "Password reset successful" });
 };
+
+export const logoutUser = (req: Request, res: Response): void => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  res.status(200).json({ message: "Logout successful" });
+};
+
+export const checkUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: "User not authenticated." });
+      return;
+    }
+
+    // Fetch the user from the database
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    }); 
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    // Return the user data
+    res.status(200).json({
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};

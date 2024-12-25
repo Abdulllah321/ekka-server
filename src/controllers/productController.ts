@@ -19,7 +19,7 @@ export const createProduct = async (
     productTags,
     imageUrls,
     brand,
-    discountPrice,
+    discountPercentage,
     weight,
     dimensions,
     shippingFee,
@@ -31,9 +31,9 @@ export const createProduct = async (
 
   // Ensure numeric values are parsed correctly
   const parsedPrice = parseFloat(price);
-  const parsedDiscountPrice = discountPrice
-    ? parseFloat(discountPrice)
-    : undefined;
+  const parsedDiscountPercentage = discountPercentage
+    ? parseFloat(discountPercentage)
+    : 0;
   const parsedWeight = weight ? parseFloat(weight) : undefined;
   const parsedShippingFee = shippingFee ? parseFloat(shippingFee) : undefined;
 
@@ -46,6 +46,10 @@ export const createProduct = async (
         .split(",")
         .map((tag: string) => tag.trim())
         .filter((tag: string) => tag !== ""); // If it's a string, split and clean up
+
+  // Calculate discountPrice based on discountPercentage and price
+  const discountPrice =
+    parsedPrice - (parsedPrice * parsedDiscountPercentage) / 100;
 
   try {
     const newProduct = await prisma.product.create({
@@ -62,9 +66,10 @@ export const createProduct = async (
         productTags: productTagsArray,
         imageUrls,
         brand,
-        discountPrice: parsedDiscountPrice,
+        discountPrice,
         weight: parsedWeight,
         dimensions,
+        discountPercentage,
         shippingFee: parsedShippingFee,
         stockStatus,
         mainCategoryId,
@@ -141,7 +146,6 @@ export const updateProduct = async (
     productTags,
     imageUrls,
     brand,
-    discountPrice,
     weight,
     dimensions,
     shippingFee,
@@ -149,7 +153,15 @@ export const updateProduct = async (
     mainCategoryId,
     subCategoryId,
     userId,
+    discountPercentage,
   } = req.body;
+
+  const parsedPrice = parseFloat(price);
+  const parsedDiscountPercentage = discountPercentage
+    ? parseFloat(discountPercentage)
+    : 0;
+  const discountPrice =
+    parsedPrice - (parsedPrice * parsedDiscountPercentage) / 100;
 
   try {
     const updatedProduct: Product = await prisma.product.update({
@@ -175,10 +187,12 @@ export const updateProduct = async (
         mainCategoryId,
         subCategoryId,
         userId,
+        discountPercentage: parsedDiscountPercentage,
       },
     });
     res.status(200).json(updatedProduct);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: "Error updating product" });
   }
 };
