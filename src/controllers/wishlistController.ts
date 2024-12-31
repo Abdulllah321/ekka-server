@@ -2,36 +2,60 @@
 import { Request, Response } from "express";
 import { prisma } from "../app";
 
-
 export const getWishlists = async (req: Request, res: Response) => {
   const userId = req.params.userId;
 
   try {
-    const wishlists = await prisma.wishlist.findMany({
+    const wishlists = await prisma.wishlist.findFirst({
       where: { userId },
       include: { wishlistItems: { include: { product: true } } },
     });
-    res.status(200).json(wishlists);
+    res.status(200).json(wishlists?.wishlistItems || []);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch wishlists" });
   }
 };
 
 export const createWishlist = async (req: Request, res: Response) => {
-  const { userId, items } = req.body;
+  const userId = req.user?.id;
+  const { itemId } = req.body;
+  if (!userId) {
+    res.status(400).json("User not found");
+    return;
+  }
 
   try {
-    const wishlist = await prisma.wishlist.create({
-      data: {
-        userId,
-        wishlistItems: {
-          create: items.map((item: { productId: string }) => ({
-            productId: item.productId,
-          })),
-        },
-      },
+    const existingWishlist = await prisma.wishlist.findFirst({
+      where: { userId },
     });
-    res.status(201).json(wishlist);
+
+    if (existingWishlist) {
+      const updatedWishlist = await prisma.wishlist.update({
+        where: { id: existingWishlist.id },
+        data: {
+          wishlistItems: {
+            create: {
+              productId: itemId,
+            },
+          },
+        },
+        include: { wishlistItems: { include: { product: true } } },
+      });
+      res.status(200).json(updatedWishlist.wishlistItems || []);
+    } else {
+      const wishlist = await prisma.wishlist.create({
+        data: {
+          userId,
+          wishlistItems: {
+            create: {
+              productId: itemId,
+            },
+          },
+        },
+        include: { wishlistItems: { include: { product: true } } },
+      });
+      res.status(201).json(wishlist.wishlistItems || []);
+    }
   } catch (error) {
     res.status(500).json({ error: "Failed to create wishlist" });
   }
@@ -51,7 +75,7 @@ export const addItemsToWishlist = async (req: Request, res: Response) => {
           })),
         },
       },
-      include: { wishlistItems: true },
+      include: { wishlistItems: { include: { product: true } } },
     });
     res.status(200).json(updatedWishlist);
   } catch (error) {
@@ -60,17 +84,18 @@ export const addItemsToWishlist = async (req: Request, res: Response) => {
 };
 
 export const removeItemFromWishlist = async (req: Request, res: Response) => {
-  const { wishlistItemId } = req.params;
+  const { itemId } = req.body;
 
   try {
-    await prisma.wishlistItem.delete({
-      where: { id: wishlistItemId },
+    await prisma.wishlistItem.deleteMany({
+      where: { productId: itemId },
     });
     res.status(200).json({ message: "Item removed from wishlist" });
   } catch (error) {
     res.status(500).json({ error: "Failed to remove item from wishlist" });
   }
 };
+
 
 export const deleteWishlist = async (req: Request, res: Response) => {
   const { wishlistId } = req.params;

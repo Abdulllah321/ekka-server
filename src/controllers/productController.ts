@@ -69,7 +69,7 @@ export const createProduct = async (
         discountPrice,
         weight: parsedWeight,
         dimensions,
-        discountPercentage,
+        discountPercentage: parsedDiscountPercentage,
         shippingFee: parsedShippingFee,
         stockStatus,
         mainCategoryId,
@@ -104,15 +104,15 @@ export const getAllProducts = async (
 };
 
 // READ: Get product by ID
-export const getProductById = async (
+export const getProductBySlug = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { id } = req.params;
+  const { slug } = req.params;
 
   try {
     const product: Product | null = await prisma.product.findUnique({
-      where: { id },
+      where: { slug },
     });
 
     if (!product) {
@@ -192,7 +192,6 @@ export const updateProduct = async (
     });
     res.status(200).json(updatedProduct);
   } catch (error) {
-    console.log(error)
     res.status(500).json({ error: "Error updating product" });
   }
 };

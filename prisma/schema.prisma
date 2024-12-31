@@ -97,11 +97,15 @@ model User {
   // Cart and Wishlist relations
   cart     Cart[]
   wishlist Wishlist[]
+
+  Order Order[]
 }
 
 model Address {
   id          String      @id @default(cuid())
   userId      String
+  firstName   String
+  lastName    String
   street      String
   city        String
   state       String
@@ -111,6 +115,8 @@ model Address {
 
   // Relations
   user User @relation(fields: [userId], references: [id])
+
+  Order Order[]
 }
 
 enum UserRole {
@@ -143,10 +149,12 @@ model Cart {
 }
 
 model CartItem {
-  id        String  @id @default(cuid())
-  quantity  Int     @default(1) // Quantity of the product in the cart
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  id            String  @id @default(cuid())
+  quantity      Int     @default(1) // Quantity of the product in the cart
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  selectedColor String?
+  selectedSize  String?
 
   // Relations
   cartId String
@@ -195,11 +203,11 @@ model Product {
   shortDesc     String?
   price         Float
   stockQuantity Int
-  sizes         String[] // Array of available sizes (e.g., ["S", "M", "L"])
-  colors        String[] // Array of available colors (e.g., ["Red", "Blue", "Black"])
-  productTags   String[] // Tags associated with the product (e.g., ["Summer", "Cotton", "Sale"])
-  imageUrls     String[] // Array of image URLs for the product
-  status        Status   @default(active) // Default status to active
+  sizes         String[]
+  colors        String[]
+  productTags   String[]
+  imageUrls     String[]
+  status        Status   @default(active)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   soldQuantity  Int      @default(0)
@@ -227,9 +235,10 @@ model Product {
   subCategory   SubCategory @relation("SubCategoryProducts", fields: [subCategoryId], references: [id])
 
   reviews Review[] // One-to-many relation with the Review model
-  rating  Float? // Average rating of the product (e.g., 4.5)
+  rating  Float?   @default(0)
   userId  String?
-  user    User?    @relation("VendorProducts", fields: [userId], references: [id])
+
+  user User? @relation("VendorProducts", fields: [userId], references: [id])
 
   // Cart and Wishlist relations
   cartItems     CartItem[]
@@ -240,6 +249,8 @@ model Product {
 
   // Coupons relation
   coupons Coupon[] @relation("ProductCoupons")
+
+  OrderItem OrderItem[]
 }
 
 model Offer {
@@ -287,4 +298,47 @@ enum CouponStatus {
 enum DiscountType {
   percentage
   fixedAmount
+}
+
+model Order {
+  id                    String        @id @default(cuid())
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id])
+  status                OrderStatus   @default(pending)
+  totalAmount           Float
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  selectedAddress       Address       @relation(fields: [selectedAddressId], references: [id])
+  selectedAddressId     String
+  selectedPaymentMethod PaymentMethod
+  orderComment          String?
+  expectedDeliveryDate  DateTime?
+  expectedDeliveryDays  Float?        @default(7)
+  isPaid                Boolean       @default(false)
+  // Relations
+  orderItems            OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  price     Float
+}
+
+enum OrderStatus {
+  pending
+  processing
+  shipped
+  outForDelivery
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  COD
+  RAZORPAY
 }

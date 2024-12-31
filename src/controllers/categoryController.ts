@@ -119,20 +119,44 @@ export const deleteMainCategory = async (req: Request, res: Response) => {
 };
 
 export const createManyMainCategories = async (req: Request, res: Response) => {
-  const mainCategories = req.body;
-  console.log(req.body);
+  const { MainCategories } = req.body;
+
   try {
-    const createdMainCategories = await prisma.mainCategory.createMany({
-      data: mainCategories,
-    });
+    const createdMainCategories = await Promise.all(
+      MainCategories.map(async (mainCategory: any) => {
+        const { SubCategories, ...mainCategoryData } = mainCategory;
+        const createdMainCategory = await prisma.mainCategory.create({
+          data: mainCategoryData,
+        });
+
+        if (SubCategories && SubCategories.length > 0) {
+          const subCategoriesWithSlugs = await Promise.all(
+            SubCategories.map(async (subCategory: any) => {
+              const uniqueSlug = subCategory.slug || await generateUniqueSlug(subCategory.name, 'subCategory');
+              return {
+                ...subCategory,
+                slug: uniqueSlug,
+                mainCategoryId: createdMainCategory.id,
+              };
+            })
+          );
+
+          await prisma.subCategory.createMany({
+            data: subCategoriesWithSlugs,
+          });
+        }
+
+        return createdMainCategory;
+      })
+    );
 
     res.status(201).json({
-      message: "Main categories created successfully",
+      message: "Main categories and subcategories created successfully",
       createdMainCategories,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to create main categories" });
+    res.status(500).json({ error: "Failed to create main categories and subcategories" });
   }
 };
 

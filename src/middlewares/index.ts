@@ -19,26 +19,23 @@ export const calculateCartTotals = async (
       include: { cartItems: { include: { product: true } } },
     });
 
-    if (!cart) {
-      res.status(404).json({ error: "Cart not found" });
-      return;
+    if (cart) {
+      const subtotal = cart.cartItems.reduce(
+        (sum, item) => sum + item.quantity * (item.product.price || 0),
+        0
+      );
+
+      // Calculate delivery charge (sum of product shipping fees or default to 100)
+      const deliveryCharge = cart.cartItems.reduce(
+        (total, item) => total + (item.product.shippingFee || 100),
+        0
+      );
+      const totalAmount = subtotal + deliveryCharge;
+      await prisma.cart.update({
+        where: { id: cart.id },
+        data: { subtotal, deliveryCharge, totalAmount },
+      });
     }
-
-    const subtotal = cart.cartItems.reduce(
-      (sum, item) => sum + item.quantity * (item.product.price || 0),
-      0
-    );
-
-    // Calculate delivery charge (sum of product shipping fees or default to 100)
-    const deliveryCharge = cart.cartItems.reduce(
-      (total, item) => total + (item.product.shippingFee || 100),
-      0
-    );
-    const totalAmount = subtotal + deliveryCharge;
-    await prisma.cart.update({
-      where: { id: cart.id },
-      data: { subtotal, deliveryCharge, totalAmount },
-    });
     next();
   } catch (error) {
     console.error("Error in calculateCartTotals middleware:", error);

@@ -11,7 +11,10 @@ import categoryRoutes from "./routes/categoryRoutes";
 import productRoutes from "./routes/productRoutes";
 import bannerRoutes from "./routes/bannerRoutes";
 import cartRoutes from "./routes/cartRoutes";
+import wishlistRoutes from "./routes/wishlistRoutes";
 import couponRoutes from "./routes/couponRoutes";
+import userRoutes from "./routes/userRoutes";
+import orderRoutes from "./routes/orderRoutes";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -28,7 +31,7 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   credentials: true,
 };
 
@@ -47,7 +50,10 @@ app.use("/api", categoryRoutes);
 app.use("/api", productRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Upload API
 app.post(

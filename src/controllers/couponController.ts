@@ -32,7 +32,6 @@ export const createCoupon = async (
     });
     res.status(201).json(coupon);
   } catch (error: any) {
-    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };
