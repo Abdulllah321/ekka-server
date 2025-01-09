@@ -166,10 +166,8 @@ export const fetchOrderByUser = async (
       where: { userId },
       include: { orderItems: { include: { product: true } } },
     });
-    const products = orders.flatMap((order) =>
-      order.orderItems.map((item) => item.product)
-    );
-    res.status(200).json(products);
+ 
+    res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch products by user ID" });
   }

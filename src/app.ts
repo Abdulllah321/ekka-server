@@ -1,5 +1,4 @@
 import express, { Application, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -15,6 +14,8 @@ import wishlistRoutes from "./routes/wishlistRoutes";
 import couponRoutes from "./routes/couponRoutes";
 import userRoutes from "./routes/userRoutes";
 import orderRoutes from "./routes/orderRoutes";
+import reviewsRoutes from "./routes/reviewRoutes";
+import { PrismaClient } from "@prisma/client";
 
 const app: Application = express();
 const prisma = new PrismaClient();
@@ -54,6 +55,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/reviews", reviewsRoutes);
 
 // Upload API
 app.post(

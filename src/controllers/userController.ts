@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../app";
 
 export const getUserDetails = async (
   req: Request,
@@ -18,6 +16,7 @@ export const getUserDetails = async (
         phoneNumber: true,
         profileImage: true,
         role: true,
+        coverPhoto: true,
         verificationStatus: true,
       },
     });
@@ -39,11 +38,25 @@ export const updateUserDetails = async (
 ): Promise<void> => {
   try {
     const userId = req?.user?.id; // Assuming user ID is stored in req.user by the authentication middleware
-    const { email, firstName, lastName, phoneNumber, profileImage } = req.body;
+    const {
+      email,
+      firstName,
+      lastName,
+      phoneNumber,
+      profileImage,
+      coverPhoto,
+    } = req.body;
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { email, firstName, lastName, phoneNumber, profileImage },
+      data: {
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        profileImage,
+        coverPhoto,
+      },
     });
 
     res.json(updatedUser);
@@ -79,7 +92,16 @@ export const addAddress = async (
       res.status(404).json({ message: "User Not found" });
       return;
     }
-    const { street, city, state, postalCode, country, addressType, firstName, lastName } = req.body;
+    const {
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      addressType,
+      firstName,
+      lastName,
+    } = req.body;
 
     const newAddress = await prisma.address.create({
       data: {
@@ -107,11 +129,29 @@ export const updateAddress = async (
 ): Promise<void> => {
   try {
     const addressId = req.params.addressId;
-    const { street, city, state, postalCode, country, addressType, firstName, lastName } = req.body;
+    const {
+      street,
+      city,
+      state,
+      postalCode,
+      country,
+      addressType,
+      firstName,
+      lastName,
+    } = req.body;
 
     const updatedAddress = await prisma.address.update({
       where: { id: addressId },
-      data: { street, city, state, postalCode, country, addressType, firstName, lastName },
+      data: {
+        street,
+        city,
+        state,
+        postalCode,
+        country,
+        addressType,
+        firstName,
+        lastName,
+      },
     });
 
     res.json(updatedAddress);

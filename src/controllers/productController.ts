@@ -111,8 +111,26 @@ export const getProductBySlug = async (
   const { slug } = req.params;
 
   try {
-    const product: Product | null = await prisma.product.findUnique({
+    const product = await prisma.product.findUnique({
       where: { slug },
+      include: {
+        reviews: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            productId: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!product) {
@@ -120,10 +138,42 @@ export const getProductBySlug = async (
       return;
     }
 
-    res.status(200).json(product);
+    // Fetch related products based on mainCategoryId or subCategoryId
+    const relatedProducts = await prisma.product.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { mainCategoryId: product.mainCategoryId },
+              { subCategoryId: product.subCategoryId },
+            ],
+          },
+          { id: { not: product.id } }, // Exclude the current product
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        thumbnail: true,
+        price: true,
+        discountPrice: true,
+        rating: true,
+        description: true,
+        colors: true,
+        sizes: true,
+        imageUrls: true,
+        mainCategoryId: true,
+        subCategoryId: true,
+        discountPercentage: true,
+      },  
+      take: 5, // Limit the number of related products
+    });
+    const productData = { ...product, relatedProducts };
+    res.status(200).json(productData);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error fetching product by ID" });
+    res.status(500).json({ error: "Error fetching product by slug" });
   }
 };
 
