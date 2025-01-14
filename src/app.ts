@@ -15,6 +15,8 @@ import couponRoutes from "./routes/couponRoutes";
 import userRoutes from "./routes/userRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import reviewsRoutes from "./routes/reviewRoutes";
+import vendorRoutes from "./routes/vendorRoutes";
+import storeRoutes from "./routes/storeRoutes";
 import { PrismaClient } from "@prisma/client";
 
 const app: Application = express();
@@ -56,6 +58,8 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewsRoutes);
+app.use("/api/vendor", vendorRoutes);
+app.use("/api/stores", storeRoutes);
 
 // Upload API
 app.post(

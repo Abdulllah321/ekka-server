@@ -14,7 +14,7 @@ export const authenticated = (
   res: Response,
   next: NextFunction
 ): void => {
-  const token = req.cookies.accessToken; // Ensure cookie-parser middleware is used
+  const token = req.cookies.accessToken;
   if (!token) {
     res.status(401).json({ error: "Access token required" });
     return;

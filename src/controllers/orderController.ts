@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { prisma } from "../app";
 
-const prisma = new PrismaClient();
 
 export const createOrder = async (
   req: Request,
@@ -21,13 +21,40 @@ export const createOrder = async (
       selectedPaymentMethod,
       orderComment,
       expectedDeliveryDays = 7,
+      storeIds
     } = req.body;
+
+    if (!Array.isArray(orderItems) || orderItems.length === 0) {
+      res.status(400).json({ error: "Order items are required" });
+      return;
+    }
+
+    if (!Array.isArray(storeIds) || storeIds.length === 0) {
+      res.status(400).json({ error: "At least one store ID is required" });
+      return;
+    }
+
+    if (!totalAmount || isNaN(parseFloat(totalAmount))) {
+      res.status(400).json({ error: "Valid total amount is required" });
+      return;
+    }
+
+    if (!selectedAddressId) {
+      res.status(400).json({ error: "Selected address ID is required" });
+      return;
+    }
+
+    if (!selectedPaymentMethod) {
+      res.status(400).json({ error: "Selected payment method is required" });
+      return;
+    }
 
     let expectedDeliveryDate = new Date();
     expectedDeliveryDate.setDate(
       expectedDeliveryDate.getDate() + expectedDeliveryDays
     );
 
+    // Create the order
     const order = await prisma.order.create({
       data: {
         userId,
@@ -35,7 +62,7 @@ export const createOrder = async (
         selectedAddressId,
         selectedPaymentMethod,
         orderComment,
-        expectedDeliveryDate: expectedDeliveryDate,
+        expectedDeliveryDate,
         orderItems: {
           create: orderItems.map((item: any) => ({
             productId: item.productId,
@@ -43,12 +70,15 @@ export const createOrder = async (
             price: item.price,
           })),
         },
+        stores: {
+          connect: storeIds.map((storeId: string) => ({ id: storeId })),
+        },
       },
     });
 
     res.status(201).json(order);
   } catch (error) {
-    console.error(error);
+    console.error("Error creating order:", error);
     res.status(500).json({ error: "Failed to create order" });
   }
 };
@@ -166,7 +196,7 @@ export const fetchOrderByUser = async (
       where: { userId },
       include: { orderItems: { include: { product: true } } },
     });
- 
+
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch products by user ID" });

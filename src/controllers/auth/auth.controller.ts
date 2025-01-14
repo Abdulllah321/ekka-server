@@ -6,7 +6,7 @@ import { prisma } from "../../app";
 import { UserRole, VerificationStatus } from "@prisma/client";
 
 // Utility function to send email
-const sendEmail = async (to: string, subject: string, text: string) => {
+export const sendEmail = async (to: string, subject: string, text: string) => {
   const transporter = nodemailer.createTransport({
     service: "gmail", // Change to your email provider
     auth: {
@@ -144,23 +144,12 @@ export const resetPasswordWithOtp = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { email, otpCode, newPassword } = req.body;
+  const { email, newPassword } = req.body;
 
   // Find the user by email
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     res.status(404).json({ message: "User not found" });
-    return;
-  }
-
-  // Check if the OTP is correct and not expired
-  if (user.otpCode !== otpCode) {
-    res.status(400).json({ message: "Invalid OTP" });
-    return;
-  }
-
-  if (new Date() > user.otpExpiry!) {
-    res.status(400).json({ message: "OTP expired" });
     return;
   }
 
@@ -170,7 +159,7 @@ export const resetPasswordWithOtp = async (
   // Update the user's password
   await prisma.user.update({
     where: { email },
-    data: { password: hashedPassword, otpCode: null, otpExpiry: null }, // Clear OTP after use
+    data: { password: hashedPassword, otpCode: null, otpExpiry: null },
   });
 
   res.status(200).json({ message: "Password reset successful" });
@@ -198,7 +187,11 @@ export const checkUser = async (req: Request, res: Response): Promise<void> => {
       where: {
         id: userId,
       },
-    }); 
+      select: {
+        role: true,
+        id: true,
+      },
+    });
 
     if (!user) {
       res.status(404).json({ message: "User not found." });
@@ -207,15 +200,94 @@ export const checkUser = async (req: Request, res: Response): Promise<void> => {
 
     // Return the user data
     res.status(200).json({
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
+      id: user.id,
+      role: user.role,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+  const { email, otp } = req.body;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { otpCode: true, otpExpiry: true },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    if (new Date() > user.otpExpiry!) {
+      res.status(400).json({ message: "OTP expired" });
+      return;
+    }
+
+    console.log("Otp code" + user.otpCode);
+    console.log("Otp " + otp);
+
+    if (user.otpCode !== otp) {
+      res.status(400).json({ message: "Invalid OTP." });
+      return;
+    }
+
+    // Reset the OTP and otpExpiry fields
+    await prisma.user.update({
+      where: { email },
+      data: { otpCode: null, otpExpiry: null },
+    });
+
+    res.status(200).json({ message: "OTP verified successfully." });
+  } catch (error: any) {
+    console.error("Error verifying OTP:", error);
+    res.status(500).json({ message: "An error occurred while verifying OTP." });
+  }
+};
+
+export const changePassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { currentPassword, newPassword } = req.body;
+  const { id } = req.user as { id: string };
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { password: true },
+    });
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isPasswordValid) {
+      res.status(400).json({ message: "Current password is incorrect." });
+      return;
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedNewPassword },
+    });
+
+    res.status(200).json({ message: "Password changed successfully." });
+  } catch (error: any) {
+    console.error("Error changing password:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while changing password." });
   }
 };

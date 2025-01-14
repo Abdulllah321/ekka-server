@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Admin {
   id        String   @id @default(cuid()) // Generates a unique string ID
   username  String   @unique
@@ -101,6 +100,7 @@ model User {
   wishlist Wishlist[]
 
   Order Order[]
+  Store Store[]
 }
 
 model Address {
@@ -229,6 +229,8 @@ model Product {
   saleStartDate DateTime? // Sale start date (if on sale)
   saleEndDate   DateTime? // Sale end date (if on sale)
 
+  storeId        String?
+  store          Store?       @relation("StoreProducts", fields: [storeId], references: [id])
   // Relations
   mainCategoryId String
   mainCategory   MainCategory @relation("MainCategoryProducts", fields: [mainCategoryId], references: [id])
@@ -289,6 +291,8 @@ model Coupon {
 
   // Relations
   products Product[] @relation("ProductCoupons")
+  storeId  String?
+  store    Store?    @relation("StoreCoupons", fields: [storeId], references: [id])
 }
 
 enum CouponStatus {
@@ -317,8 +321,22 @@ model Order {
   expectedDeliveryDate  DateTime?
   expectedDeliveryDays  Float?        @default(7)
   isPaid                Boolean       @default(false)
+
   // Relations
   orderItems            OrderItem[]
+  stores                Store[]       @relation("OrderStores") // Many-to-many relation
+
+  OrderStore OrderStore[]
+}
+
+model OrderStore {
+  id      String @id @default(cuid())
+  orderId String
+  storeId String
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
 }
 
 model OrderItem {
@@ -343,4 +361,51 @@ enum OrderStatus {
 enum PaymentMethod {
   COD
   RAZORPAY
+}
+
+model Store {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  slug         String       @unique
+  description  String?
+  logo         String?      // URL or path to the store logo
+  bannerImage  String?      // URL or path to the store banner
+  contactEmail String
+  contactPhone String?
+  address      String?      // Store address
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  status       Status       @default(active) // Active or inactive status
+  ownerId      String
+  owner        User         @relation(fields: [ownerId], references: [id])
+  rating       Float?       @default(0) // Average rating of the store
+  reviewsCount Int          @default(0) // Total number of reviews
+  socialLinks  SocialLinks? // Social media links for the store
+
+  // Customization options
+  themeColor       String? // Hex code for the store's theme color
+  isCustomizable   Boolean @default(false) // Whether the store allows customization
+  customFields     Json? // Custom fields for additional store options
+  paymentMethods   Json? // Accepted payment methods (e.g., COD, Razorpay, etc.)
+  shippingPolicies String? // Shipping policies of the store
+  returnPolicies   String? // Return policies of the store
+
+  // Relations
+  products Product[] @relation("StoreProducts")
+  coupons  Coupon[]  @relation("StoreCoupons")
+  orders   Order[]   @relation("OrderStores")
+
+  OrderStore OrderStore[]
+}
+
+model SocialLinks {
+  id        String  @id @default(cuid())
+  storeId   String  @unique
+  store     Store   @relation(fields: [storeId], references: [id])
+  facebook  String? // Facebook link
+  instagram String? // Instagram link
+  twitter   String? // Twitter link
+  linkedin  String? // LinkedIn link
+  youtube   String? // YouTube link
+  website   String? // Store's website link
 }

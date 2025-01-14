@@ -6,6 +6,7 @@ import {
   updateCoupon,
   deleteCoupon,
   getCouponByCode,
+  getCouponsByStore,
 } from "../controllers/couponController";
 import { authenticated } from "../middlewares/authMiddleware";
 import { expireCouponsMiddleware } from "../middlewares";
@@ -22,6 +23,9 @@ router.get("/code/:code", getCouponByCode);
 
 // Create a new coupon
 router.post("/", createCoupon);
+
+// Get coupons by store ID
+router.get("/store/:storeId", getCouponsByStore); 
 
 // Update an existing coupon
 router.put("/:id", updateCoupon);

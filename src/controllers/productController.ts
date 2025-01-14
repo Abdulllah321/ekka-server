@@ -27,6 +27,7 @@ export const createProduct = async (
     mainCategoryId,
     subCategoryId,
     userId,
+    storeId,
   } = req.body;
 
   // Ensure numeric values are parsed correctly
@@ -75,6 +76,7 @@ export const createProduct = async (
         mainCategoryId,
         subCategoryId,
         userId,
+        storeId,
       },
     });
 
@@ -166,7 +168,7 @@ export const getProductBySlug = async (
         mainCategoryId: true,
         subCategoryId: true,
         discountPercentage: true,
-      },  
+      },
       take: 5, // Limit the number of related products
     });
     const productData = { ...product, relatedProducts };
@@ -204,6 +206,7 @@ export const updateProduct = async (
     subCategoryId,
     userId,
     discountPercentage,
+    status,
   } = req.body;
 
   const parsedPrice = parseFloat(price);
@@ -237,6 +240,7 @@ export const updateProduct = async (
         mainCategoryId,
         subCategoryId,
         userId,
+        status,
         discountPercentage: parsedDiscountPercentage,
       },
     });
