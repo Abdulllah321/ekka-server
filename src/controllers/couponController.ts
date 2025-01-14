@@ -133,22 +133,6 @@ export const getCouponByCode = async (
       res.status(401).json({ message: "User not authenticated." });
       return;
     }
-
-    const userCart = await prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        cartItems: { include: { product: { select: { id: true } } } },
-      },
-    });
-
-    // Check if the cart has no items
-    if (!userCart || userCart.cartItems.length === 0) {
-      res
-        .status(400)
-        .json({ error: "Your cart is empty. Add items to apply the coupon." });
-      return;
-    }
-
     const coupon = await prisma.coupon.findUnique({
       where: { code },
       include: {
@@ -157,16 +141,35 @@ export const getCouponByCode = async (
         },
       },
     });
-    const cartIds = userCart.cartItems.map((item) => item.product.id);
-    const couponProductIds = coupon?.products.map((product) => product.id);
 
-    const isCouponApplicable = couponProductIds?.some((couponProductId) =>
-      cartIds.includes(couponProductId)
-    );
+    if (coupon?.storeId) {
+      const userCart = await prisma.cart.findFirst({
+        where: { userId },
+        include: {
+          cartItems: { include: { product: { select: { id: true } } } },
+        },
+      });
 
-    if (!isCouponApplicable) {
-      res.status(400).json({ error: "Coupon is not applicable to your cart." });
-      return;
+      if (!userCart || userCart.cartItems.length === 0) {
+        res.status(400).json({
+          error: "Your cart is empty. Add items to apply the coupon.",
+        });
+        return;
+      }
+
+      const cartIds = userCart.cartItems.map((item) => item.product.id);
+      const couponProductIds = coupon?.products.map((product) => product.id);
+
+      const isCouponApplicable = couponProductIds?.some((couponProductId) =>
+        cartIds.includes(couponProductId)
+      );
+
+      if (!isCouponApplicable) {
+        res
+          .status(400)
+          .json({ error: "Coupon is not applicable to your cart." });
+        return;
+      }
     }
 
     if (!coupon) {
