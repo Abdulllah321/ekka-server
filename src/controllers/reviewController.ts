@@ -104,3 +104,74 @@ export const deleteReview = async (
     res.status(500).json({ error: "Failed to delete review." });
   }
 };
+// Get all reviews
+export const getAllReviews = async (
+  _req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const reviews = await prisma.review.findMany({
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            profileImage: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            thumbnail: true,
+          },
+        },
+      },
+    });
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch reviews." });
+  }
+};
+// Get a single review by ID
+export const fetchReviewById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  try {
+    const review = await prisma.review.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            profileImage: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            thumbnail: true,
+          },
+        },
+      },
+    });
+
+    if (!review) {
+      res.status(404).json({ error: "Review not found." });
+      return;
+    }
+
+    res.status(200).json(review);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch review." });
+  }
+};

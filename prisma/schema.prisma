@@ -215,7 +215,6 @@ model Product {
   soldQuantity  Int      @default(0)
 
   // Optional fields
-  brand              String? // Brand of the product (e.g., "Nike", "Adidas")
   discountPrice      Float? // Optional discounted price
   discountPercentage Float? // Discount percentage (e.g., 20 for 20% off)
   weight             Float? // Weight of the product (e.g., 1.5 kg)

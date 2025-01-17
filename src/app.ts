@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import upload from "./utils/upload";
+import cron from "node-cron";
 
 //routes import
 import authRoutes from "./routes/authRoutes";
@@ -88,6 +89,28 @@ app.post(
 
 app.get("/", (req, res) => {
   res.send("Welcome to the E-commerce Backend!");
+});
+
+cron.schedule("0 0 * * *", async () => {
+  console.log("Running cron job to update product `isNew` status...");
+  try {
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    const result = await prisma.product.updateMany({
+      where: {
+        createdAt: { lte: twoDaysAgo },
+        isNew: true,
+      },
+      data: {
+        isNew: false,
+      },
+    });
+
+    console.log(`Updated ${result.count} products to set isNew to false.`);
+  } catch (error) {
+    console.error("Error running cron job:", error);
+  }
 });
 
 export { app, prisma };
