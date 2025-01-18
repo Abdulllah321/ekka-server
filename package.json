@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node --transpileOnly src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node src/server.js",
     "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
