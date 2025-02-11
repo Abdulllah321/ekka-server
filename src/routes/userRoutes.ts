@@ -7,10 +7,12 @@ import {
   updateAddress,
   deleteAddress,
   getAddressByUser,
+  getAllUsers,
 } from "../controllers/userController";
 import { authenticated } from "../middlewares/authMiddleware";
 
 const router = Router();
+router.get("/all", getAllUsers);
 router.use(authenticated);
 router.get("/", getUserDetails);
 router.put("/", updateUserDetails);

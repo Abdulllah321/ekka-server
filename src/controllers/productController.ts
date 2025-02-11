@@ -132,6 +132,14 @@ export const getProductBySlug = async (
             },
           },
         },
+        store: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
       },
     });
 

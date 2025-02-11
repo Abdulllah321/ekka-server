@@ -79,6 +79,16 @@ export const getStoreById = async (
         products: true,
         coupons: true,
         orders: true,
+        socialLinks: true,
+        owner: {
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true,
+            email: true,
+            profileImage: true,
+          },
+        },
       },
     });
 

@@ -197,3 +197,56 @@ export const getAddressByUser = async (
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        profileImage: true,
+        role: true,
+        verificationStatus: true,
+        createdAt: true,
+        _count: {
+          select: {
+            Order: true,
+          },
+        },
+      },
+    });
+
+    const usersWithTotalPurchases = await Promise.all(
+      users.map(async (user) => {
+        const totalPurchases = await prisma.orderItem.count({
+          where: {
+            order: {
+              userId: user.id,
+              status: "delivered", // Only count completed orders
+            },
+          },
+        });
+
+        return {
+          ...user,
+          totalPurchases, // Add the total number of products purchased
+        };
+      })
+    );
+
+    if (usersWithTotalPurchases.length === 0) {
+      res.status(404).json({ message: "No users found" });
+      return;
+    }
+
+    res.json(usersWithTotalPurchases);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};

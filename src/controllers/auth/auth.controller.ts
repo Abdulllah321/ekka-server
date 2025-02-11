@@ -28,7 +28,8 @@ export const registerUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { email, password, firstName, lastName, phoneNumber } = req.body;
+  const { email, password, firstName, lastName, phoneNumber, profileImage } =
+    req.body;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -48,6 +49,7 @@ export const registerUser = async (
       firstName,
       lastName,
       phoneNumber,
+      profileImage,
       role: UserRole.customer, // Default to customer role
     },
   });
