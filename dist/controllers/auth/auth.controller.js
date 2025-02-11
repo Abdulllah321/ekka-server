@@ -28,7 +28,7 @@ const sendEmail = async (to, subject, text) => {
 exports.sendEmail = sendEmail;
 // Register new user
 const registerUser = async (req, res) => {
-    const { email, password, firstName, lastName, phoneNumber } = req.body;
+    const { email, password, firstName, lastName, phoneNumber, profileImage } = req.body;
     // Check if user already exists
     const existingUser = await app_1.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -45,6 +45,7 @@ const registerUser = async (req, res) => {
             firstName,
             lastName,
             phoneNumber,
+            profileImage,
             role: client_1.UserRole.customer, // Default to customer role
         },
     });

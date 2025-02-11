@@ -95,6 +95,14 @@ const getProductBySlug = async (req, res) => {
                         },
                     },
                 },
+                store: true,
+                user: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        profileImage: true,
+                    },
+                },
             },
         });
         if (!product) {

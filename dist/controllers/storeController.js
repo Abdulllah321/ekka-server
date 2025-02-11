@@ -65,6 +65,16 @@ const getStoreById = async (req, res) => {
                 products: true,
                 coupons: true,
                 orders: true,
+                socialLinks: true,
+                owner: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        role: true,
+                        email: true,
+                        profileImage: true,
+                    },
+                },
             },
         });
         if (!store) {
