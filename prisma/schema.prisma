@@ -221,6 +221,7 @@ model Product {
   dimensions         String? // Dimensions of the product (e.g., "10x10x5 cm")
   shippingFee        Float? // Optional shipping fee for the product
   stockStatus        StockStatus @default(inStock) // Stock status (inStock, outOfStock, limitedStock)
+  brand              String? // Brand of the product
 
   // Sale and New Badges
   isNew         Boolean   @default(false) // Flag to mark if the product is new
@@ -322,8 +323,8 @@ model Order {
   isPaid                Boolean       @default(false)
 
   // Relations
-  orderItems            OrderItem[]
-  stores                Store[]       @relation("OrderStores") // Many-to-many relation
+  orderItems OrderItem[]
+  stores     Store[]     @relation("OrderStores") // Many-to-many relation
 
   OrderStore OrderStore[]
 }
@@ -367,11 +368,11 @@ model Store {
   name         String       @unique
   slug         String       @unique
   description  String?
-  logo         String?      // URL or path to the store logo
-  bannerImage  String?      // URL or path to the store banner
+  logo         String? // URL or path to the store logo
+  bannerImage  String? // URL or path to the store banner
   contactEmail String
   contactPhone String?
-  address      String?      // Store address
+  address      String? // Store address
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   status       Status       @default(active) // Active or inactive status

@@ -1,4 +1,4 @@
-import { prisma } from "./app"; // Adjust the import path as needed
+import { prisma } from "../src/app"; // Adjust the import path as needed
 import bcrypt from "bcrypt";
 
 async function main() {

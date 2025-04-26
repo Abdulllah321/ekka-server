@@ -11,7 +11,7 @@ import { authenticated } from "../middlewares/authMiddleware";
 const router = express.Router();
 
 // CREATE product
-router.post("/products", authenticated, createProduct);
+router.post("/products",  createProduct);
 
 // READ all products
 router.get("/products", getAllProducts);

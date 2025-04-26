@@ -192,6 +192,7 @@ export const checkUser = async (req: Request, res: Response): Promise<void> => {
       select: {
         role: true,
         id: true,
+        email: true,
       },
     });
 
@@ -203,6 +204,7 @@ export const checkUser = async (req: Request, res: Response): Promise<void> => {
     // Return the user data
     res.status(200).json({
       id: user.id,
+      email: user.email,
       role: user.role,
     });
   } catch (error) {

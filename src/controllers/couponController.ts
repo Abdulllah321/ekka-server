@@ -28,9 +28,20 @@ export const createCoupon = async (
       return;
     }
 
-    const parsedDiscountAmount = parseInt(discountAmount);
+    const parsedDiscountAmount = parseFloat(discountAmount);
     const parsedStartDate = new Date(startDate);
     const parsedEndDate = new Date(endDate);
+
+    let productConnections: { id: string }[] = [];
+
+    if (Array.isArray(products) && products.length > 0) {
+      productConnections = products.map((productId: string) => ({ id: productId }));
+    } else {
+      const allProducts = await prisma.product.findMany({
+        select: { id: true },
+      });
+      productConnections = allProducts.map((p) => ({ id: p.id }));
+    }
 
     const coupon = await prisma.coupon.create({
       data: {
@@ -43,21 +54,21 @@ export const createCoupon = async (
         status,
         storeId,
         products: {
-          connect: products.map((productId: string) => ({ id: productId })),
+          connect: productConnections,
         },
       },
     });
 
     res.status(201).json(coupon);
   } catch (error: any) {
-    // Handle unique constraint error specifically
-    if (error.code === "P2002" && error.meta.target.includes("code")) {
+    if (error.code === "P2002" && error.meta?.target?.includes("code")) {
       res.status(400).json({ error: "Coupon code already exists" });
     } else {
       res.status(500).json({ error: error.message });
     }
   }
 };
+
 
 // Get all coupons
 export const getAllCoupons = async (
